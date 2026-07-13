@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Slope and Intercept - ARIVERSE</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 18px;
+    background: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    display: flex;
+    justify-content: flex-start;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  body::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+  .wrap {
+    display: flex;
+    gap: 4px;
+    max-width: 860px;
+    width: 100%;
+    margin: 0;
+  }
+  .sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    padding-right: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .nav-list {
+    list-style: decimal;
+    padding-left: 20px;
+    margin: 0;
+  }
+  .nav-list li {
+    margin: 0 0 8px;
+  }
+  .nav-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 13px;
+    color: #000000;
+    padding: 4px 0;
+    cursor: pointer;
+    opacity: 0.5;
+  }
+  .nav-item.active {
+    opacity: 1;
+    font-weight: 500;
+  }
+  .content { flex: 1; min-width: 0; max-width: 640px; }
+  .card {
+    background: #ffffff;
+    border: 1px solid #000000;
+    border-radius: 12px;
+    padding: 24px 20px;
+    display: none;
+    min-height: 520px;
+  }
+  .card.active { display: block; }
+  svg {
+    width: 100%;
+    height: 320px;
+    display: block;
+  }
+  .controls { margin-top: 20px; }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .row label {
+    font-size: 13px;
+    color: #000000;
+    min-width: 60px;
+  }
+  .row input[type="range"] {
+    flex: 1;
+    accent-color: #000000;
+  }
+  .row span {
+    font-size: 13px;
+    font-weight: 500;
+    color: #000000;
+    min-width: 34px;
+    text-align: right;
+  }
+  .loss-section {
+    margin-top: 22px;
+    padding-top: 0;
+  }
+  .loss-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .loss-label span:first-child { font-size: 13px; color: #000000; }
+  .loss-value {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: 18px;
+    font-weight: 500;
+    color: #000000;
+  }
+  .loss-bar-track {
+    width: 100%;
+    height: 8px;
+    background: #ffffff;
+    border: 1px solid #000000;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .loss-bar-fill {
+    height: 100%;
+    background: #000000;
+    width: 50%;
+    transition: width 0.15s ease;
+  }
+  .misclass { font-size: 12px; color: #000000; margin-top: 8px; }
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #000000;
+  }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .swatch { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .training-panel {
+    margin-top: 0;
+    display: grid;
+    gap: 10px;
+  }
+  .training-toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .train-btn {
+    border: 1px solid #000000;
+    background: #ffffff;
+    color: #000000;
+    font: inherit;
+    font-size: 12px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .train-btn:hover {
+    background: #f3f3f3;
+  }
+  .training-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    color: #000000;
+  }
+  .training-meta.weights {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .training-config {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: #000000;
+  }
+  .training-config input[type="number"] {
+    width: 84px;
+    border: 1px solid #000000;
+    border-radius: 999px;
+    padding: 7px 10px;
+    font: inherit;
+    font-size: 12px;
+    background: #ffffff;
+    color: #000000;
+  }
+  .weight-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border: 1px solid #000000;
+    border-radius: 999px;
+    font-size: 12px;
+    background: #ffffff;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .train-svg {
+    width: 100%;
+    height: 240px;
+    display: block;
+    border: 1px solid transparent;
+  }
+  .training-shell {
+    margin-top: 16px;
+    padding: 12px 12px 10px;
+    border: 1px solid #000000;
+    border-radius: 14px;
+  }
+  .training-shell .training-toolbar { margin-bottom: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="sidebar">
+    <ol class="nav-list">
+      <li><button class="nav-item active" data-target="panel1">Slope and Intercept</button></li>
+      <li><button class="nav-item" data-target="panel2">OR Gate and Loss</button></li>
+      <li><button class="nav-item" data-target="panel3">Single Layer Perceptron</button></li>
+      <li><button class="nav-item" data-target="panel4">Try to Fit XOR</button></li>
+    </ol>
+  </div>
+
+  <div class="content">
+
+    <div class="card active" id="panel1">
+      <svg id="svg1" viewBox="0 0 260 200"></svg>
+      <div class="controls">
+        <div class="row">
+          <label for="m1">Slope m</label>
+          <input type="range" id="m1" min="-3" max="3" step="0.1" value="1">
+          <span id="m1-out">1.0</span>
+        </div>
+        <div class="row">
+          <label for="c1">Intercept c</label>
+          <input type="range" id="c1" min="-5" max="5" step="0.5" value="0">
+          <span id="c1-out">0.0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="panel2">
+      <svg id="svg2" viewBox="0 0 260 200"></svg>
+      <div class="legend">
+        <span><span class="swatch" style="background:#000000;"></span>output 1</span>
+        <span><span class="swatch" style="background:#ffffff; border:1px solid #000000;"></span>output 0</span>
+      </div>
+      <div class="controls">
+        <div class="row">
+          <label for="m2">Slope m</label>
+          <input type="range" id="m2" min="-3" max="3" step="0.1" value="1">
+          <span id="m2-out">1.0</span>
+        </div>
+        <div class="row">
+          <label for="c2">Intercept c</label>
+          <input type="range" id="c2" min="-2" max="2" step="0.1" value="-0.5">
+          <span id="c2-out">-0.5</span>
+        </div>
+      </div>
+      <div class="loss-section">
+        <div class="loss-label">
+          <span>Loss</span>
+          <span class="loss-value" id="loss-out">0.00</span>
+        </div>
+        <div class="loss-bar-track">
+          <div class="loss-bar-fill" id="loss-bar"></div>
+        </div>
+        <p class="misclass" id="misclass-out">0 points misclassified</p>
+      </div>
+    </div>
+
+    <div class="card" id="panel3">
+      <svg id="svg3" viewBox="0 0 320 240" class="train-svg"></svg>
+      <div class="training-shell">
+        <div class="training-panel">
+          <div class="training-config">
+            <label for="epoch-count">Epoch target</label>
+            <input id="epoch-count" type="number" min="1" max="200" step="1" value="8">
+          </div>
+          <div class="training-toolbar">
+            <button id="train-toggle" class="train-btn" type="button">Run Training</button>
+            <button id="train-reset" class="train-btn" type="button">Reset</button>
+          </div>
+          <div class="training-meta">
+            <span id="train-epoch">Epoch 0 / 8</span>
+            <span id="train-sample">Sample 0/4</span>
+          </div>
+          <div class="training-meta weights">
+            <span class="weight-pill" id="w1-out">w1 = 0.20</span>
+            <span class="weight-pill" id="w2-out">w2 = 0.20</span>
+            <span class="weight-pill" id="b3-out">b = -0.20</span>
+          </div>
+        </div>
+      </div>
+      <div class="loss-section">
+        <div class="loss-label">
+          <span>Loss</span>
+          <span class="loss-value" id="train-loss-out">0.00</span>
+        </div>
+        <p class="misclass" id="train-status-out">Training is paused.</p>
+      </div>
+    </div>
+
+    <div class="card" id="panel4">
+      <svg id="svg4" viewBox="0 0 260 200"></svg>
+      <div class="legend">
+        <span><span class="swatch" style="background:#000000;"></span>output 1</span>
+        <span><span class="swatch" style="background:#ffffff; border:1px solid #000000;"></span>output 0</span>
+      </div>
+      <div class="controls">
+        <div class="row">
+          <label for="m4">Slope m</label>
+          <input type="range" id="m4" min="-3" max="3" step="0.1" value="1">
+          <span id="m4-out">1.0</span>
+        </div>
+        <div class="row">
+          <label for="c4">Intercept c</label>
+          <input type="range" id="c4" min="-2" max="2" step="0.1" value="0">
+          <span id="c4-out">0.0</span>
+        </div>
+      </div>
+      <div class="loss-section">
+        <div class="loss-label">
+          <span>Loss</span>
+          <span class="loss-value" id="loss4-out">0.00</span>
+        </div>
+        <div class="loss-bar-track">
+          <div class="loss-bar-fill" id="loss4-bar"></div>
+        </div>
+        <p class="misclass" id="misclass4-out">0 points misclassified</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.target).classList.add('active');
+  });
+});
+
+const W = 260, H = 200, CX = W/2, CY = H/2, SCALE = 16;
+function toPx(x, y) { return [CX + x*SCALE, CY - y*SCALE]; }
+
+function renderPanel1() {
+  const m = parseFloat(document.getElementById('m1').value);
+  const c = parseFloat(document.getElementById('c1').value);
+  document.getElementById('m1-out').textContent = m.toFixed(1);
+  document.getElementById('c1-out').textContent = c.toFixed(1);
+
+  const x1 = -8, x2 = 8;
+  const y1 = m*x1 + c, y2 = m*x2 + c;
+  const [px1, py1] = toPx(x1, y1);
+  const [px2, py2] = toPx(x2, y2);
+  const [pcx, pcy] = toPx(0, c);
+
+  document.getElementById('svg1').innerHTML =
+    '<line x1="0" y1="'+CY+'" x2="'+W+'" y2="'+CY+'" stroke="#000000" stroke-width="1" stroke-opacity="0.25"/>' +
+    '<line x1="'+CX+'" y1="0" x2="'+CX+'" y2="'+H+'" stroke="#000000" stroke-width="1" stroke-opacity="0.25"/>' +
+    '<line x1="'+px1+'" y1="'+py1+'" x2="'+px2+'" y2="'+py2+'" stroke="#000000" stroke-width="2.5" stroke-linecap="round"/>' +
+    '<circle cx="'+pcx+'" cy="'+pcy+'" r="4" fill="#000000"/>';
+}
+
+const orPoints = [
+  {x:0, y:0, label:0},
+  {x:0, y:1, label:1},
+  {x:1, y:0, label:1},
+  {x:1, y:1, label:1}
+];
+
+const xorPoints = [
+  {x:0, y:0, label:0},
+  {x:0, y:1, label:1},
+  {x:1, y:0, label:1},
+  {x:1, y:1, label:0}
+];
+
+const trainPoints = orPoints;
+
+const trainingState = {
+  w1: 0,
+  w2: 0,
+  b: 0,
+  epoch: 0,
+  sampleIndex: 0,
+  running: false,
+  targetEpochs: 8,
+  timer: null
+};
+
+const W2 = 260, H2 = 200, CX2 = 60, CY2 = 160, SCALE2 = 90;
+function toPx2(x, y) { return [CX2 + x*SCALE2, CY2 - y*SCALE2]; }
+
+function renderPanel2() {
+  renderClassificationPanel({
+    svgId: 'svg2',
+    mId: 'm2',
+    cId: 'c2',
+    moutId: 'm2-out',
+    coutId: 'c2-out',
+    lossOutId: 'loss-out',
+    lossBarId: 'loss-bar',
+    misclassOutId: 'misclass-out',
+    points: orPoints,
+    lineYMin: -1,
+    lineYMax: 2
+  });
+}
+
+function renderPanel3() {
+  renderTrainingPanel();
+}
+
+function renderPanel4() {
+  renderClassificationPanel({
+    svgId: 'svg4',
+    mId: 'm4',
+    cId: 'c4',
+    moutId: 'm4-out',
+    coutId: 'c4-out',
+    lossOutId: 'loss4-out',
+    lossBarId: 'loss4-bar',
+    misclassOutId: 'misclass4-out',
+    points: xorPoints,
+    lineYMin: -1,
+    lineYMax: 2
+  });
+}
+
+function renderTrainingPanel() {
+  const w1 = trainingState.w1;
+  const w2 = trainingState.w2;
+  const b = trainingState.b;
+
+  document.getElementById('epoch-count').value = trainingState.targetEpochs;
+  document.getElementById('train-epoch').textContent = 'Epoch ' + trainingState.epoch + ' / ' + trainingState.targetEpochs;
+  document.getElementById('train-sample').textContent = 'Sample 0/' + trainPoints.length;
+  document.getElementById('w1-out').textContent = 'w1 = ' + w1.toFixed(2);
+  document.getElementById('w2-out').textContent = 'w2 = ' + w2.toFixed(2);
+  document.getElementById('b3-out').textContent = 'b = ' + b.toFixed(2);
+
+  let pointsSvg = '';
+  let totalLoss = 0;
+  let misclassified = 0;
+  trainPoints.forEach(p => {
+    const z = w1 * p.x + w2 * p.y + b;
+    const pred = z >= 0 ? 1 : 0;
+    const loss = Math.max(0, 0.5 - ((p.label === 1 ? 1 : -1) * z));
+    totalLoss += loss;
+    if (pred !== p.label) misclassified++;
+    const [px, py] = toPx2(p.x, p.y);
+    const fill = p.label === 1 ? '#000000' : '#ffffff';
+    pointsSvg += '<circle cx="'+px+'" cy="'+py+'" r="6" fill="'+fill+'" stroke="#000000" stroke-width="1.5"/>';
+  });
+
+  const avgLoss = totalLoss / trainPoints.length;
+  document.getElementById('train-loss-out').textContent = avgLoss.toFixed(2);
+  document.getElementById('train-status-out').textContent =
+    trainingState.running ? 'Training is running.' : 'Training is paused.';
+
+  const svg = document.getElementById('svg3');
+  svg.innerHTML = buildTrainingSvg(w1, w2, b, avgLoss, misclassified);
+}
+
+function clampWeight(value) {
+  return Math.max(-2, Math.min(2, value));
+}
+
+function resetTrainingWeights() {
+  trainingState.w1 = 0;
+  trainingState.w2 = 0;
+  trainingState.b = 0;
+}
+
+function buildTrainingSvg(w1, w2, b, avgLoss, misclassified) {
+  const graphOriginX = 32;
+  const graphOriginY = 26;
+  const graphWidth = 276;
+  const graphHeight = 150;
+  const graphCX = graphOriginX + graphWidth / 2;
+  const graphCY = graphOriginY + graphHeight / 2;
+  const graphScaleX = 110;
+  const graphScaleY = 82;
+  const graphToPx = (x, y) => [graphOriginX + 42 + x * graphScaleX, graphOriginY + 128 - y * graphScaleY];
+  const w2ForLine = Math.abs(w2) < 0.0001 ? (w2 >= 0 ? 0.0001 : -0.0001) : w2;
+  const lineX1 = -0.25;
+  const lineX2 = 1.25;
+  const lineY1 = -(w1 * lineX1 + b) / w2ForLine;
+  const lineY2 = -(w1 * lineX2 + b) / w2ForLine;
+  const [px1, py1] = graphToPx(lineX1, lineY1);
+  const [px2, py2] = graphToPx(lineX2, lineY2);
+
+  const pointSvg = trainPoints.map(p => {
+    const [px, py] = graphToPx(p.x, p.y);
+    const pred = (w1 * p.x + w2 * p.y + b) >= 0 ? 1 : 0;
+    const fill = p.label === 1 ? '#000000' : '#ffffff';
+    const stroke = pred === p.label ? '#000000' : '#d11f1f';
+    return '<circle cx="'+px+'" cy="'+py+'" r="8" fill="'+fill+'" stroke="'+stroke+'" stroke-width="2"/>';
+  }).join('');
+
+  const linePath = '<line x1="'+px1+'" y1="'+py1+'" x2="'+px2+'" y2="'+py2+'" stroke="#000000" stroke-width="3" stroke-linecap="round"/>';
+  const x1Label = graphOriginX + 26;
+  const y1Label = graphOriginY + 180;
+  const x2Label = graphOriginX + 184;
+  const y2Label = graphOriginY + 58;
+
+  return '' +
+    '<rect x="12" y="16" width="296" height="200" rx="18" fill="#ffffff" stroke="#000000" stroke-width="1.2"/>' +
+    '<text x="28" y="36" font-size="13" font-weight="600" fill="#000000">Graph</text>' +
+    '<line x1="'+graphOriginX+'" y1="'+graphCY+'" x2="'+(graphOriginX + graphWidth)+'" y2="'+graphCY+'" stroke="#000000" stroke-width="1" stroke-opacity="0.25"/>' +
+    '<line x1="'+graphCX+'" y1="'+graphOriginY+'" x2="'+graphCX+'" y2="'+(graphOriginY + graphHeight)+'" stroke="#000000" stroke-width="1" stroke-opacity="0.25"/>' +
+    linePath +
+    pointSvg +
+    '<text x="'+x1Label+'" y="'+(graphOriginY + 64)+'" font-size="11" fill="#000000">x1</text>' +
+    '<text x="'+x2Label+'" y="'+y2Label+'" font-size="11" fill="#000000">x2</text>' +
+    '<text x="'+(graphOriginX + 10)+'" y="'+(graphOriginY + 146)+'" font-size="11" fill="#000000">OR data</text>';
+}
+
+function stopTraining() {
+  trainingState.running = false;
+  if (trainingState.timer) {
+    clearInterval(trainingState.timer);
+    trainingState.timer = null;
+  }
+  document.getElementById('train-toggle').textContent = 'Run Training';
+  renderTrainingPanel();
+}
+
+function trainStep() {
+  const p = trainPoints[trainingState.sampleIndex];
+  const pred = (trainingState.w1 * p.x + trainingState.w2 * p.y + trainingState.b) >= 0 ? 1 : 0;
+  const err = p.label - pred;
+
+  trainingState.w1 = trainingState.w1 + err * p.x;
+  trainingState.w2 = trainingState.w2 + err * p.y;
+  trainingState.b = trainingState.b + err;
+
+  trainingState.sampleIndex += 1;
+  if (trainingState.sampleIndex >= trainPoints.length) {
+    trainingState.sampleIndex = 0;
+    trainingState.epoch += 1;
+  }
+
+  renderTrainingPanel();
+}
+
+function startTraining() {
+  if (trainingState.running) return;
+  trainingState.running = true;
+  document.getElementById('train-toggle').textContent = 'Pause Training';
+  renderTrainingPanel();
+  trainingState.timer = setInterval(() => {
+    trainStep();
+    if (trainingState.epoch >= trainingState.targetEpochs) {
+      stopTraining();
+    }
+  }, 500);
+}
+
+document.getElementById('train-toggle').addEventListener('click', () => {
+  if (trainingState.running) stopTraining();
+  else startTraining();
+});
+
+document.getElementById('train-reset').addEventListener('click', () => {
+  stopTraining();
+  trainingState.epoch = 0;
+  trainingState.sampleIndex = 0;
+  resetTrainingWeights();
+  renderTrainingPanel();
+});
+
+document.getElementById('epoch-count').addEventListener('input', e => {
+  trainingState.targetEpochs = Math.max(1, Math.min(200, parseInt(e.target.value || '1', 10)));
+  if (trainingState.epoch > trainingState.targetEpochs) {
+    trainingState.epoch = trainingState.targetEpochs;
+  }
+  renderTrainingPanel();
+});
+
+function renderClassificationPanel({ svgId, mId, cId, moutId, coutId, lossOutId, lossBarId, misclassOutId, points, lineYMin, lineYMax }) {
+  const m = parseFloat(document.getElementById(mId).value);
+  const c = parseFloat(document.getElementById(cId).value);
+  document.getElementById(moutId).textContent = m.toFixed(1);
+  document.getElementById(coutId).textContent = c.toFixed(1);
+
+  const x1 = -1, x2 = 2;
+  const y1 = m*x1 + c, y2 = m*x2 + c;
+  const [px1, py1] = toPx2(x1, y1);
+  const [px2, py2] = toPx2(x2, y2);
+
+  let pointsSvg = '';
+  let totalLoss = 0;
+  let misclassified = 0;
+  const denom = Math.sqrt(1 + m*m);
+
+  points.forEach(p => {
+    const dist = (p.y - (m*p.x + c)) / denom;
+    const sign = p.label === 1 ? 1 : -1;
+    const margin = sign * dist;
+    const hinge = Math.max(0, 0.5 - margin);
+    totalLoss += hinge;
+    if (margin < 0) misclassified++;
+    const [px, py] = toPx2(p.x, p.y);
+    const fill = p.label === 1 ? '#000000' : '#ffffff';
+    pointsSvg += '<circle cx="'+px+'" cy="'+py+'" r="6" fill="'+fill+'" stroke="#000000" stroke-width="1.5"/>';
+  });
+
+  const avgLoss = totalLoss / points.length;
+
+  document.getElementById(svgId).innerHTML =
+    '<line x1="0" y1="'+CY2+'" x2="'+W2+'" y2="'+CY2+'" stroke="#000000" stroke-width="1" stroke-opacity="0.25"/>' +
+    '<line x1="'+CX2+'" y1="0" x2="'+CX2+'" y2="'+H2+'" stroke="#000000" stroke-width="1" stroke-opacity="0.25"/>' +
+    '<line x1="'+px1+'" y1="'+py1+'" x2="'+px2+'" y2="'+py2+'" stroke="#000000" stroke-width="2" stroke-linecap="round"/>' +
+    pointsSvg;
+
+  document.getElementById(lossOutId).textContent = avgLoss.toFixed(2);
+  const barPct = Math.min(100, (avgLoss / 0.5) * 100);
+  document.getElementById(lossBarId).style.width = barPct + '%';
+  document.getElementById(misclassOutId).textContent = misclassified + ' point' + (misclassified === 1 ? '' : 's') + ' misclassified';
+}
+
+document.getElementById('m1').addEventListener('input', renderPanel1);
+document.getElementById('c1').addEventListener('input', renderPanel1);
+document.getElementById('m2').addEventListener('input', renderPanel2);
+document.getElementById('c2').addEventListener('input', renderPanel2);
+document.getElementById('m4').addEventListener('input', renderPanel4);
+document.getElementById('c4').addEventListener('input', renderPanel4);
+
+document.getElementById('epoch-count').value = trainingState.targetEpochs;
+renderPanel1();
+renderPanel2();
+renderPanel3();
+renderPanel4();
+</script>
+</body>
+</html>
