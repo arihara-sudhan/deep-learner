@@ -139,6 +139,68 @@
   }
   .legend span { display: flex; align-items: center; gap: 5px; }
   .swatch { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .formula-card {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border: 1px solid #000000;
+    border-radius: 12px;
+    background: #f8f8f8;
+  }
+  .formula-eq {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: #000000;
+  }
+  .formula-note {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #000000;
+    line-height: 1.35;
+  }
+  .table-section {
+    margin-top: 16px;
+  }
+  .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #000000;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .sign-table-wrap {
+    border: 1px solid #000000;
+    border-radius: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .sign-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    color: #000000;
+  }
+  .sign-table th,
+  .sign-table td {
+    padding: 7px 8px;
+    border-bottom: 1px solid #000000;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .sign-table th:first-child,
+  .sign-table td:first-child {
+    text-align: left;
+  }
+  .sign-table thead th {
+    background: #f2f2f2;
+    font-weight: 600;
+  }
+  .sign-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .sign-pos { font-weight: 600; }
+  .sign-neg { font-weight: 600; }
   .training-panel {
     margin-top: 0;
     display: grid;
@@ -224,7 +286,7 @@
   <div class="sidebar">
     <ol class="nav-list">
       <li><button class="nav-item active" data-target="panel1">Slope and Intercept</button></li>
-      <li><button class="nav-item" data-target="panel2">OR Gate and Loss</button></li>
+      <li><button class="nav-item" data-target="panel2">Sign Changes</button></li>
       <li><button class="nav-item" data-target="panel3">Single Layer Perceptron</button></li>
       <li><button class="nav-item" data-target="panel4">Try to Fit XOR</button></li>
     </ol>
@@ -251,30 +313,61 @@
     <div class="card" id="panel2">
       <svg id="svg2" viewBox="0 0 260 200"></svg>
       <div class="legend">
-        <span><span class="swatch" style="background:#000000;"></span>output 1</span>
-        <span><span class="swatch" style="background:#ffffff; border:1px solid #000000;"></span>output 0</span>
+        <span><span class="swatch" style="background:#000000;"></span>positive</span>
+        <span><span class="swatch" style="background:#ffffff; border:1px solid #000000;"></span>negative</span>
+      </div>
+      <div class="formula-card">
+        <div class="formula-eq">z = w1x1 + w2x2 + b</div>
+        <div class="formula-eq" style="margin-top:6px;">y = step(z)</div>
+        <div class="formula-note">Step output: y = 1 when z >= 0, otherwise y = 0.</div>
       </div>
       <div class="controls">
         <div class="row">
-          <label for="m2">Slope m</label>
-          <input type="range" id="m2" min="-3" max="3" step="0.1" value="1">
-          <span id="m2-out">1.0</span>
+          <label for="w1-2">w1</label>
+          <input type="range" id="w1-2" min="-3" max="3" step="0.1" value="-0.3">
+          <span id="w1-2-out">w1 = -0.3</span>
         </div>
         <div class="row">
-          <label for="c2">Intercept c</label>
-          <input type="range" id="c2" min="-2" max="2" step="0.1" value="-0.5">
-          <span id="c2-out">-0.5</span>
+          <label for="w2-2">w2</label>
+          <input type="range" id="w2-2" min="-3" max="3" step="0.1" value="1">
+          <span id="w2-2-out">w2 = 1.0</span>
+        </div>
+        <div class="row">
+          <label for="b2">b</label>
+          <input type="range" id="b2" min="-2" max="2" step="0.1" value="-0.5">
+          <span id="b2-out">b = -0.5</span>
+        </div>
+      </div>
+      <div class="table-section">
+        <div class="section-title">Changing Values</div>
+        <div class="sign-table-wrap">
+          <table class="sign-table">
+            <thead>
+              <tr>
+                <th>Point</th>
+                <th>x1</th>
+                <th>x2</th>
+                <th>w1x1</th>
+                <th>w2x2</th>
+                <th>b</th>
+                <th>z</th>
+                <th>y</th>
+                <th>Sign</th>
+              </tr>
+            </thead>
+            <tbody id="sign-table-body"></tbody>
+          </table>
         </div>
       </div>
       <div class="loss-section">
         <div class="loss-label">
-          <span>Loss</span>
+          <span>Distance</span>
           <span class="loss-value" id="loss-out">0.00</span>
         </div>
         <div class="loss-bar-track">
           <div class="loss-bar-fill" id="loss-bar"></div>
         </div>
-        <p class="misclass" id="misclass-out">0 points misclassified</p>
+        <p class="misclass" id="misclass-out">0 points below line</p>
       </div>
     </div>
 
@@ -390,6 +483,7 @@ const xorPoints = [
 ];
 
 const trainPoints = orPoints;
+const signPoints = orPoints;
 
 const trainingState = {
   w1: 0,
@@ -406,19 +500,7 @@ const W2 = 260, H2 = 200, CX2 = 60, CY2 = 160, SCALE2 = 90;
 function toPx2(x, y) { return [CX2 + x*SCALE2, CY2 - y*SCALE2]; }
 
 function renderPanel2() {
-  renderClassificationPanel({
-    svgId: 'svg2',
-    mId: 'm2',
-    cId: 'c2',
-    moutId: 'm2-out',
-    coutId: 'c2-out',
-    lossOutId: 'loss-out',
-    lossBarId: 'loss-bar',
-    misclassOutId: 'misclass-out',
-    points: orPoints,
-    lineYMin: -1,
-    lineYMax: 2
-  });
+  renderSignPanel();
 }
 
 function renderPanel3() {
@@ -441,6 +523,65 @@ function renderPanel4() {
   });
 }
 
+function renderSignPanel() {
+  const w1 = parseFloat(document.getElementById('w1-2').value);
+  const w2 = parseFloat(document.getElementById('w2-2').value);
+  const b = parseFloat(document.getElementById('b2').value);
+
+  document.getElementById('w1-2-out').textContent = 'w1 = ' + w1.toFixed(1);
+  document.getElementById('w2-2-out').textContent = 'w2 = ' + w2.toFixed(1);
+  document.getElementById('b2-out').textContent = 'b = ' + b.toFixed(1);
+
+  const w2ForLine = Math.abs(w2) < 0.0001 ? (w2 >= 0 ? 0.0001 : -0.0001) : w2;
+  const x1 = -1, x2 = 2;
+  const y1 = -(w1*x1 + b) / w2ForLine;
+  const y2 = -(w1*x2 + b) / w2ForLine;
+  const [px1, py1] = toPx2(x1, y1);
+  const [px2, py2] = toPx2(x2, y2);
+
+  let pointsSvg = '';
+  let belowLine = 0;
+  let totalDistance = 0;
+  const norm = Math.sqrt(w1*w1 + w2*w2) || 1;
+  const tableRows = signPoints.map((p, index) => {
+    const z = w1 * p.x + w2 * p.y + b;
+    const y = z >= 0 ? 1 : 0;
+    const dist = z / norm;
+    if (z < 0) belowLine++;
+    totalDistance += Math.abs(dist);
+    const signLabel = y === 1 ? 'positive' : 'negative';
+    const fill = y === 1 ? '#000000' : '#ffffff';
+    const [px, py] = toPx2(p.x, p.y);
+    pointsSvg += '<circle cx="'+px+'" cy="'+py+'" r="6" fill="'+fill+'" stroke="#000000" stroke-width="1.5"/>';
+    return '<tr>' +
+      '<td>P' + (index + 1) + ' (' + p.x + ', ' + p.y + ')</td>' +
+      '<td>' + p.x.toFixed(0) + '</td>' +
+      '<td>' + p.y.toFixed(0) + '</td>' +
+      '<td>' + (w1 * p.x).toFixed(2) + '</td>' +
+      '<td>' + (w2 * p.y).toFixed(2) + '</td>' +
+      '<td>' + b.toFixed(2) + '</td>' +
+      '<td>' + z.toFixed(2) + '</td>' +
+      '<td>' + y + '</td>' +
+      '<td class="' + (y === 1 ? 'sign-pos' : 'sign-neg') + '">' + signLabel + '</td>' +
+    '</tr>';
+  }).join('');
+
+  const avgDistance = totalDistance / signPoints.length;
+
+  document.getElementById('svg2').innerHTML =
+    '<line x1="0" y1="'+CY2+'" x2="'+W2+'" y2="'+CY2+'" stroke="#000000" stroke-width="1" stroke-opacity="0.25"/>' +
+    '<line x1="'+CX2+'" y1="0" x2="'+CX2+'" y2="'+H2+'" stroke="#000000" stroke-width="1" stroke-opacity="0.25"/>' +
+    '<line x1="'+px1+'" y1="'+py1+'" x2="'+px2+'" y2="'+py2+'" stroke="#000000" stroke-width="2" stroke-linecap="round"/>' +
+    pointsSvg +
+    '<text x="18" y="24" font-size="11" fill="#000000">x2</text>' +
+    '<text x="225" y="190" font-size="11" fill="#000000">x1</text>';
+
+  document.getElementById('sign-table-body').innerHTML = tableRows;
+  document.getElementById('loss-out').textContent = avgDistance.toFixed(2);
+  document.getElementById('loss-bar').style.width = Math.min(100, (avgDistance / 0.5) * 100) + '%';
+  document.getElementById('misclass-out').textContent = belowLine + ' point' + (belowLine === 1 ? '' : 's') + ' below line';
+}
+
 function renderTrainingPanel() {
   const w1 = trainingState.w1;
   const w2 = trainingState.w2;
@@ -461,7 +602,7 @@ function renderTrainingPanel() {
     const pred = z >= 0 ? 1 : 0;
     const loss = Math.max(0, 0.5 - ((p.label === 1 ? 1 : -1) * z));
     totalLoss += loss;
-    if (pred !== p.label) misclassified++;
+    if (pred !== p.label || Math.abs(z) < 1e-9) misclassified++;
     const [px, py] = toPx2(p.x, p.y);
     const fill = p.label === 1 ? '#000000' : '#ffffff';
     pointsSvg += '<circle cx="'+px+'" cy="'+py+'" r="6" fill="'+fill+'" stroke="#000000" stroke-width="1.5"/>';
@@ -542,8 +683,9 @@ function stopTraining() {
 
 function trainStep() {
   const p = trainPoints[trainingState.sampleIndex];
-  const pred = (trainingState.w1 * p.x + trainingState.w2 * p.y + trainingState.b) >= 0 ? 1 : 0;
-  const err = p.label - pred;
+  const z = trainingState.w1 * p.x + trainingState.w2 * p.y + trainingState.b;
+  const y = p.label === 1 ? 1 : -1;
+  const err = y * z <= 0 ? y : 0;
 
   trainingState.w1 = trainingState.w1 + err * p.x;
   trainingState.w2 = trainingState.w2 + err * p.y;
@@ -614,7 +756,9 @@ function renderClassificationPanel({ svgId, mId, cId, moutId, coutId, lossOutId,
     const margin = sign * dist;
     const hinge = Math.max(0, 0.5 - margin);
     totalLoss += hinge;
-    if (margin < 0) misclassified++;
+    if (margin < 0) {
+      misclassified++;
+    }
     const [px, py] = toPx2(p.x, p.y);
     const fill = p.label === 1 ? '#000000' : '#ffffff';
     pointsSvg += '<circle cx="'+px+'" cy="'+py+'" r="6" fill="'+fill+'" stroke="#000000" stroke-width="1.5"/>';
@@ -636,8 +780,9 @@ function renderClassificationPanel({ svgId, mId, cId, moutId, coutId, lossOutId,
 
 document.getElementById('m1').addEventListener('input', renderPanel1);
 document.getElementById('c1').addEventListener('input', renderPanel1);
-document.getElementById('m2').addEventListener('input', renderPanel2);
-document.getElementById('c2').addEventListener('input', renderPanel2);
+document.getElementById('w1-2').addEventListener('input', renderPanel2);
+document.getElementById('w2-2').addEventListener('input', renderPanel2);
+document.getElementById('b2').addEventListener('input', renderPanel2);
 document.getElementById('m4').addEventListener('input', renderPanel4);
 document.getElementById('c4').addEventListener('input', renderPanel4);
 
